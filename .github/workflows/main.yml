@@ -3,18 +3,15 @@ on:
   push:
     branches:
       - main
-
 jobs:
   test-api:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v2
       - name: Install Node
         uses: actions/setup-node@v1
         with:
-          node-version: '16.x'
-
+          node-version: 18
       - name: Install newman
         run: |
           npm install -g newman
@@ -22,15 +19,24 @@ jobs:
       - name: Make Directory for results
         run: mkdir -p testResults
 
+      # Run the POSTMAN collection
       - name: Run POSTMAN collection
+        continue-on-error: true
         run: |
-          newman run petstore.collection.json -r htmlextra --reporter-htmlextra-export testResults/htmlreport.html --reporter-htmlextra-darkTheme  > testResults/runreport1.html
+          newman run petstore.collection.json -r htmlextra --reporter-htmlextra-export testResults/index.html --reporter-htmlextra-darkTheme
+
 
       # Upload the contents of Test Results directory to workspace
       - name: Output the run Details
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
-          name: reports
-          path: test_results
+          name: RunReports
+          path: testResults
 
+      # Deploy report to GitHub Pages
+      - name: Deploy report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: testResults
+          github_token: ${{ secrets.GITHUB_TOKEN }}
     
